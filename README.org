@@ -1,0 +1,76 @@
+* Linux Device Drivers
+** Basics of kernel modules
+   I have used the excellent [[https://sysplay.in/blog/linux-device-drivers/2013/02/linux-device-drivers-for-your-girl-friend/][guide]] by Anil Kumar Pugalia <email@sarika-pugs.com> as the basis.
+   First write a simple module.
+   #+BEGIN_EXAMPLE
+     #include <linux/module.h>
+     #include <linux/kernel.h>
+     #include <linux/version.h>
+
+     static int __init ldd0_init(void) {
+       printk(KERN_INFO "ldd0 loaded.");
+       return 0;
+     }
+
+     static void __exit ldd0_exit(void) {
+       printk(KERN_INFO "ldd0 removed.");
+     }
+
+     module_init(ldd0_init);
+     module_exit(ldd0_exit);
+
+     MODULE_LICENSE("GPL");
+     MODULE_AUTHOR("Prateem Mandal <prateem@gmail.com>");
+     MODULE_DESCRIPTION("Test driver.");
+   #+END_EXAMPLE
+   Makefile in the guide did not exactly work so I made some changes. These are related to fixing the KERNEL_SOURCE to point to the correct directory.
+   #+BEGIN_EXAMPLE
+     prateem@prateem-HP-EliteBook-8570p:~/C/ldd/ldd0$ less Makefile
+     # if KERNELRELEASE is not defined, we've been called directly from
+      the command line.                                               
+     # Invoke the kernel build system.
+     ifeq (${KERNELRELEASE},)
+             KERNEL_SOURCE := /usr/src/linux-headers-`uname -r`
+             PWD := $(shell pwd)
+     default:
+             ${MAKE} -C ${KERNEL_SOURCE} SUBDIRS=${PWD} modules
+
+     clean:
+             ${MAKE} -C ${KERNEL_SOURCE} SUBDIRS=${PWD} clean
+
+     # Otherwise KERNELRELEASE is defined; we've been invoked from the
+     # kernel build system and can use its language.
+     else
+             obj-m := ldd0.o
+     endif
+   #+END_EXAMPLE
+   Then the following commands would load and remode the kernel module.
+   #+BEGIN_EXAMPLE
+     prateem@prateem-HP-EliteBook-8570p:~/C/ldd/ldd0$ make
+     make -C /usr/src/linux-headers-`uname -r` SUBDIRS=/home/prateem/C/ldd/ldd0 modules
+     make[1]: Entering directory '/usr/src/linux-headers-4.4.0-65-generic'
+       CC [M]  /home/prateem/C/ldd/ldd0/ldd0.o
+       Building modules, stage 2.
+       MODPOST 1 modules
+       CC      /home/prateem/C/ldd/ldd0/ldd0.mod.o
+       LD [M]  /home/prateem/C/ldd/ldd0/ldd0.ko
+     make[1]: Leaving directory '/usr/src/linux-headers-4.4.0-65-generic'
+     prateem@prateem-HP-EliteBook-8570p:~/C/ldd/ldd0$ sudo insmod ldd0.ko
+     [sudo] password for prateem: 
+     prateem@prateem-HP-EliteBook-8570p:~/C/ldd/ldd0$ lsmod | head
+     Module                  Size  Used by
+     ldd0                   16384  0
+     xt_comment             16384  3
+     overlay                49152  2
+     xt_nat                 16384  0
+     xt_tcpudp              16384  0
+     veth                   16384  0
+     btrfs                 987136  0
+     xor                    24576  1 btrfs
+     raid6_pq              102400  1 btrfs
+     prateem@prateem-HP-EliteBook-8570p:~/C/ldd/ldd0$ sudo rmmod ldd0
+     prateem@prateem-HP-EliteBook-8570p:~/C/ldd/ldd0$ lsmod | head -2
+     Module                  Size  Used by
+     xt_comment             16384  3
+     prateem@prateem-HP-EliteBook-8570p:~/C/ldd/ldd0$ 
+   #+END_EXAMPLE
