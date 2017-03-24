@@ -74,3 +74,25 @@
      xt_comment             16384  3
      prateem@prateem-HP-EliteBook-8570p:~/C/ldd/ldd0$ 
    #+END_EXAMPLE
+   Note that resulting ldd0.ko is statically linked. You can check that using 'file' and 'ldd' commands.
+** Character driver
+   Write a simple character device driver with the following topics covered
+   1) Reserving major and minor numbers and automatically creating a file entry for the device in /dev/<devicename>.
+   2) Implementing VFS function interface.
+   3) Explore ioctl().
+** USB driver
+   Write a usb driver. It has the following steps
+   1) Simple registering and deregistering a USB driver for pen drive.
+      - Find the manufacturer and product id from lsusb.
+      - Unload existing per driver in linux through 'rmmod uas usb_storage'
+      - Load the toy usb driver and check that happened through dmesg.
+      - I faced the problem that
+	+ uas and usb-storage got loaded and used automatically when plugging in the pendrive.
+	+ found an explanation for that [[http://askubuntu.com/a/440315][here]].
+	+ The correct order is
+	  * Remove the uas and usb_storage drivers through 'rmmod uas usb_storage'
+	  * Load the toy driver. Check the dmesg/lsmod to verify that the new driver is registered.
+	  * Plug in the usb drive and check the dmesg to verify that the probe function of the toy driver is invoked.
+	  * Unplug the usb drive and check the dmesg to verify that the disconnect function of the driver is invoked.
+	  * Unload the toy driver and check through dmesg/lsmod that the driver is unloaded.
+   2) TBD
